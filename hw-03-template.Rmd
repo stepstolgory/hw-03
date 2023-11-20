@@ -1,6 +1,6 @@
 ---
 title: "hw-03"
-author: "Your Name (S000000)"
+author: "Stepan Mikoyan (S2289431)"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -10,6 +10,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(tidymodels)
 ```
 
 
@@ -86,11 +87,39 @@ Consider the numerical values `educ` and `emailhr` from your new data set `gss16
 
 a) Fit a linear regression model to predicting `emailhr` based on the `educ`. From your output, state the formula for the line-of-best fit and give an interpretation of the `emailhr` estimate.
 
+
 b) Comment on the overall performance of the linear regression model. Support your statements with an appropriate data visualisation and model fit statistics.
 
 ```{r}
+email_model <- linear_reg() %>%
+  set_engine("lm") %>%
+  fit(emailhr~educ, data = gss16_advfront)
 
+email_model_aug <- augment(email_model$fit)
+
+ggplot(data = gss16_advfront, aes(x = educ, y = emailhr)) +
+  geom_point() +
+  labs(
+    title = "Hours on email per week vs. Years in education",
+    subtitle = "With the model given by tidymodel",
+    x = "Years in education (years)",
+    y = "Time spend on email per week (hours)"
+  ) +
+  stat_function(fun = function(x) 0.6854031*x - 2.7573196)
+
+ggplot(email_model_aug, mapping = aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "gray", lty = "dashed") +
+  labs(x = "Predicted time", y = "Residuals")
 ```
+
+
+a) 
+emailhr = 0.6854031*educ - 2.7573196
+For every extra year in education, it is expected for the person to spend, on average, an extra 0.6854031 hours on email per week. If the person has 0 years in education, they are expected to spend an average of -2.7573196 hours.
+
+b)
+The linear regression model is not a good representation of the data, this can be seen in the first plot, where the line predicted by the model is not representative of the data, in addition, the residuals plot has a distinct fan shape suggesting that the model is a poor fit.
 
 ## Exercise 2: Create a workflow to fit a model
 
@@ -106,6 +135,7 @@ First, use the following code to split the dataset into a training dataset (`gss
 set.seed(1234)
 gss16_split <- initial_split(gss16_advfront)
 gss16_train <- training(gss16_split)
+
 gss16_test  <- testing(gss16_split)
 ```
 
@@ -118,6 +148,23 @@ The recipe (named `gss16_rec_1`) should contain the following steps for predicti
   - The model (named `gss16_mod_1`) should specify a model that is appropriate for the data as well as the computational engine.
 
 ```{r}
+gss16_rep_1 <- recipe(
+  advfront ~ educ,
+  data = gss16_train
+  )%>%
+  step_dummy(all_nominal_predictors())
+summary(gss16_rep_1)
+
+gss16_mod_1 <- logistic_reg() %>% 
+  set_engine("glm")
+
+gss16_wflow_1 <-
+  workflow() %>%
+  add_model(gss16_mod_1) %>%
+  add_recipe(gss16_rep_1)
+
+
+
 
 ```
 
@@ -128,13 +175,31 @@ b) Explain why you have chosen the model that you have selected.
 a) Apply the workflow you defined earlier to the training dataset and named the model as `gss16_fit_1`. Display the resulting tibble containing the fitted model parameters. 
 
 ```{r}
+gss16_fit_1 <- gss16_wflow_1 %>% 
+  fit(data = gss16_train)
 
+tidy(gss16_fit_1) %>% print(n = 30)
 ```
 
 b) Use the fitted models to predict the test data, plot the ROC curves for the predictions.
 
 ```{r}
+gss_pred_1 <- predict(gss16_fit_1, gss16_test, type = "prob") %>% 
+  bind_cols(gss16_test)
+roc1 <- gss_pred_1 %>%
+  roc_curve(
+    truth = advfront,
+    .pred_Agree,
+    event_level = "second"
+  )
+autoplot(roc1)
 
+gss_pred_1 %>%
+    roc_auc(
+    truth = advfront,
+    .pred_Agree,
+    event_level = "second"
+  )
 ```
 
 ## Exercise 4: Logistic regression modelling and interpretation
@@ -155,6 +220,24 @@ named as `gss16_fit_2`.
 Then use the fitted models to predict the test data, plot the ROC curve for the predictions for both models, and calculate the areas under the ROC curves.
 
 ```{r}
+gss16_rep_2 <- recipe(
+  advfront ~ .,
+  data = gss16_train
+  )%>%
+  step_rm(emailhr) %>%
+  step_dummy(all_nominal(), - all_outcomes())
+
+gss16_mod_2 <- logistic_reg() %>% 
+  set_engine("glm")
+
+gss16_wflow_2 <- workflow() %>% 
+  add_model(gss16_mod_2) %>% 
+  add_recipe(gss16_rep_2)
+
+gss16_fit_2 <- gss16_wflow_2 %>% 
+  fit(data = gss16_train)
+
+tidy(gss16_fit_2) %>% print(n = 30)
 
 ```
 
@@ -166,8 +249,35 @@ b) Comment on which model performs better
 Explain your reasoning.
 
 ```{r}
+library(patchwork)
+gss_pred_2 <- predict(gss16_fit_2, gss16_test, type = "prob") %>% 
+  bind_cols(gss16_test)
 
+roc2 <- gss_pred_2 %>%
+  roc_curve(
+    truth = advfront,
+    .pred_Agree,
+    event_level = "second"
+  )
+
+gss_pred_2 %>%
+    roc_auc(
+    truth = advfront,
+    .pred_Agree,
+    event_level = "second"
+  )
+
+ggplot(mapping = aes(x = 1-specificity, y = sensitivity)) +
+  geom_path(data = fortify(roc1, melt = FALSE), aes(color = "roc for fit 1")) + 
+  geom_path(data = fortify(roc2, melt = FALSE), aes(color = "roc for fit 2")) + 
+  xlab("1-specificity") + ylab("sensitivity")+
+  labs(color = NULL)+
+  geom_abline(lty = 3) 
 ```
+
+
+b) 
+gss_fit_1 performs better than gss_fit_2. This can be seen from the overlaying plot and the respective areas under the curves. The area under the gss_fit_1 curve is greater than the area under the gss_fit_2 suggesting that it is a better fit.s
 
 
 
