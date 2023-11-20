@@ -277,7 +277,7 @@ ggplot(mapping = aes(x = 1-specificity, y = sensitivity)) +
 
 
 b) 
-gss_fit_1 performs better than gss_fit_2. This can be seen from the overlaying plot and the respective areas under the curves. The area under the gss_fit_1 curve is greater than the area under the gss_fit_2 suggesting that it is a better fit.s
+gss_fit_1 performs better than gss_fit_2. This can be seen from the overlaying plot and the respective areas under the curves. The area under the gss_fit_1 curve is greater than the area under the gss_fit_2 suggesting that it is a better fit. However, both are fucking shit cause there is no correlation and all of the fucking predictions return agree
 
 
 
