@@ -11,7 +11,7 @@
 
 <meta name="author" content="Stepan Mikoyan (S2289431)" />
 
-<meta name="date" content="2023-11-20" />
+<meta name="date" content="2023-11-23" />
 
 <title>hw-03</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">hw-03</h1>
 <h4 class="author">Stepan Mikoyan (S2289431)</h4>
-<h4 class="date">2023-11-20</h4>
+<h4 class="date">2023-11-23</h4>
 
 </div>
 
@@ -452,6 +452,8 @@ and model fit statistics.</p></li>
   set_engine(&quot;lm&quot;) %&gt;%
   fit(emailhr~educ, data = gss16_advfront)
 
+
+
 email_model_aug &lt;- augment(email_model$fit)
 
 ggplot(data = gss16_advfront, aes(x = educ, y = emailhr)) +
@@ -550,7 +552,7 @@ tibble containing the fitted model parameters.</li>
 <pre class="r"><code>gss16_fit_1 &lt;- gss16_wflow_1 %&gt;% 
   fit(data = gss16_train)
 
-tidy(gss16_fit_1) %&gt;% print(n = 30)</code></pre>
+tidy(gss16_fit_1)</code></pre>
 <pre><code>## # A tibble: 2 × 5
 ##   term        estimate std.error statistic   p.value
 ##   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
@@ -685,7 +687,8 @@ gss_pred_2 %&gt;%
 <li>gss_fit_1 performs better than gss_fit_2. This can be seen from the
 overlaying plot and the respective areas under the curves. The area
 under the gss_fit_1 curve is greater than the area under the gss_fit_2
-suggesting that it is a better fit.s</li>
+suggesting that it is a better fit. However, both are not very good at
+predicting the response, as every prediction returns “Agree”.</li>
 </ol>
 </div>
 

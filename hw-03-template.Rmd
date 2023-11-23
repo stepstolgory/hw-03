@@ -95,6 +95,8 @@ email_model <- linear_reg() %>%
   set_engine("lm") %>%
   fit(emailhr~educ, data = gss16_advfront)
 
+
+
 email_model_aug <- augment(email_model$fit)
 
 ggplot(data = gss16_advfront, aes(x = educ, y = emailhr)) +
@@ -178,7 +180,7 @@ a) Apply the workflow you defined earlier to the training dataset and named the 
 gss16_fit_1 <- gss16_wflow_1 %>% 
   fit(data = gss16_train)
 
-tidy(gss16_fit_1) %>% print(n = 30)
+tidy(gss16_fit_1)
 ```
 
 b) Use the fitted models to predict the test data, plot the ROC curves for the predictions.
@@ -277,7 +279,6 @@ ggplot(mapping = aes(x = 1-specificity, y = sensitivity)) +
 
 
 b) 
-gss_fit_1 performs better than gss_fit_2. This can be seen from the overlaying plot and the respective areas under the curves. The area under the gss_fit_1 curve is greater than the area under the gss_fit_2 suggesting that it is a better fit. However, both are fucking shit cause there is no correlation and all of the fucking predictions return agree
-
+gss_fit_1 performs better than gss_fit_2. This can be seen from the overlaying plot and the respective areas under the curves. The area under the gss_fit_1 curve is greater than the area under the gss_fit_2 suggesting that it is a better fit. However, both are not very good at predicting the response, as every prediction returns "Agree".
 
 
